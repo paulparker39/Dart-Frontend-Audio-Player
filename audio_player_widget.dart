@@ -3,10 +3,12 @@ import 'package:audioplayers/audioplayers.dart';
 
 class AudioPlayerWidget extends StatefulWidget {
   final String audio; // Audio source, can be a URL or local file path
+  final AudioPlayer audioPlayer; // Pass in an AudioPlayer instance
 
   const AudioPlayerWidget({
     Key? key,
     required this.audio,
+    required this.audioPlayer,
   }) : super(key: key);
 
   @override
@@ -14,25 +16,7 @@ class AudioPlayerWidget extends StatefulWidget {
 }
 
 class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
-  late AudioPlayer audioPlayer;
   bool isPlaying = false;
-
-  @override
-  void initState() {
-    super.initState();
-    audioPlayer = AudioPlayer();
-    audioPlayer.onPlayerStateChanged.listen((event) {
-      setState(() {
-        isPlaying = (event == PlayerState.PLAYING);
-      });
-    });
-  }
-
-  @override
-  void dispose() {
-    audioPlayer.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -44,13 +28,21 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               IconButton(
-                icon: Icon(Icons.play_arrow),
+                icon: Icon(Icons.replay_10),
                 onPressed: () {
-                  if (isPlaying) {
-                    audioPlayer.pause();
-                  } else {
-                    audioPlayer.play(widget.audio);
-                  }
+                  _seekRelative(-15); // Skip backward by 15 seconds
+                },
+              ),
+              IconButton(
+                icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow),
+                onPressed: () {
+                  _togglePlayback();
+                },
+              ),
+              IconButton(
+                icon: Icon(Icons.forward_10),
+                onPressed: () {
+                  _seekRelative(15); // Skip forward by 15 seconds
                 },
               ),
             ],
@@ -59,4 +51,22 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
       ),
     );
   }
+
+  void _togglePlayback() {
+    if (isPlaying) {
+      widget.audioPlayer.pause();
+    } else {
+      widget.audioPlayer.play(widget.audio);
+    }
+    setState(() {
+      isPlaying = !isPlaying;
+    });
+  }
+
+  void _seekRelative(int seconds) {
+    int currentPosition = widget.audioPlayer.position.inSeconds;
+    int newPosition = currentPosition + seconds;
+    widget.audioPlayer.seek(Duration(seconds: newPosition));
+  }
 }
+
