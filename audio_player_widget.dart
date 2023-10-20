@@ -16,7 +16,7 @@ class AudioPlayerWidget extends StatefulWidget {
 }
 
 class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
-  bool isPlaying = false;
+  AudioPlayerState audioPlayerState = AudioPlayerState.STOPPED;
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +34,9 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                 },
               ),
               IconButton(
-                icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow),
+                icon: Icon(audioPlayerState == AudioPlayerState.PLAYING
+                    ? Icons.pause
+                    : Icons.play_arrow),
                 onPressed: () {
                   _togglePlayback();
                 },
@@ -53,20 +55,32 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
   }
 
   void _togglePlayback() {
-    if (isPlaying) {
+    if (audioPlayerState == AudioPlayerState.PLAYING) {
       widget.audioPlayer.pause();
     } else {
       widget.audioPlayer.play(widget.audio);
     }
-    setState(() {
-      isPlaying = !isPlaying;
-    });
   }
 
   void _seekRelative(int seconds) {
-    int currentPosition = widget.audioPlayer.position.inSeconds;
+    int currentPosition = widget.audioPlayer.getDuration().inSeconds;
     int newPosition = currentPosition + seconds;
     widget.audioPlayer.seek(Duration(seconds: newPosition));
   }
-}
 
+  @override
+  void initState() {
+    super.initState();
+    widget.audioPlayer.onPlayerStateChanged.listen((state) {
+      setState(() {
+        audioPlayerState = state;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    widget.audioPlayer.dispose();
+    super.dispose();
+  }
+}
